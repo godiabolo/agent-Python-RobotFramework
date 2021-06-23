@@ -9,6 +9,7 @@ from . import listener
 from .time_visitor import corrections
 from .variables import _variables
 
+import os
 
 listener = listener.listener()
 
@@ -19,10 +20,12 @@ def to_timestamp(time_str):
         return str(int(dt.timestamp() * 1000))
     return None
 
-
 class RobotResultsVisitor(ResultVisitor):
     _link_pattern = re.compile("src=[\"\']([^\"\']+)[\"\']")
 
+    def __init__(self, logroot='.'):
+        self.logroot=logroot
+        
     def start_result(self, result):
         if "RP_LAUNCH" not in _variables:
             _variables["RP_LAUNCH"] = result.suite.name
@@ -141,8 +144,9 @@ class RobotResultsVisitor(ResultVisitor):
             try:
                 m = self.parse_message(message['message'])
                 message["message"] = m[0]
-                listener.log_message_with_image(message, m[1])
-            except (AttributeError, IOError):
+                image_filename=os.path.join(self.logroot, m[1])
+                listener.log_message_with_image(message, image_filename)
+            except (AttributeError, IOError) as e:
                 # noinspection PyBroadException
                 try:
                     listener.log_message(message)
